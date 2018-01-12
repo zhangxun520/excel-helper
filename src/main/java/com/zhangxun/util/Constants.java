@@ -36,6 +36,26 @@ public class Constants {
 	 */
 	public static final String T1_REPLACE_SUBJECT_CODE = "2202.06";
 
+	/**
+	 * 转-借方默认科目代码
+	 */
+	public static final String TRANSFER_OUT_SUBJECT_CODE = "2202.00";
+
+	/**
+	 * 转-贷方默认科目代码
+	 */
+	public static final String TRANSFER_IN_SUBJECT_CODE = "2202.02";
+
+	/**
+	 * 扣-默认借方科目代码
+	 */
+	public static final String TAKE_OUT_SUBJECT_CODE = "2202.02";
+
+	/**
+	 * 扣-默认贷方科目代码
+	 */
+	public static final String TAKE_IN_SUBJECT_CODE = "2202.03";
+
 	public class T1Mark {
 		public static final String MONTH = "M";
 		public static final String DAY = "D";

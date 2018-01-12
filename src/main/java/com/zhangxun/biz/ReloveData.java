@@ -191,6 +191,54 @@ public class ReloveData {
 		return targetData;
 	}
 
+	/**
+	 * 借方(出金)
+	 * 
+	 * @return
+	 */
+	private static TargetData[] buildTransferTarget(TargetData targetData, SourceData sourceData,
+			Map<String, Object> mve2Map) {
+		Calendar inDate = Calendar.getInstance();
+		Calendar settleDate = Calendar.getInstance();
+		inDate.setTime(sourceData.getInDate());
+		settleDate.setTime(sourceData.getSettleDate());
+
+		String t1mark = configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
+		if (Constants.T1Mark.MONTH.equals(t1mark)) {
+			settleDate.set(Calendar.DATE, 1);
+			inDate.set(Calendar.DATE, 1);
+		}
+
+		String subjectName = sourceData.getSettleSubject();
+		String subjectCode = null;
+		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis()) {// 执行跨日期科目替换
+			subjectCode = Constants.T1_REPLACE_SUBJECT_CODE;
+			subjectName = subjectProperties.getProperty(Constants.T1_REPLACE_SUBJECT_CODE, "暂收款");
+		} else {
+			MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
+			if (myData.getKey() != null) {
+				subjectCode = myData.getKey();
+				subjectName = myData.getValue();
+			} else {
+				targetData.setWarn(true);
+			}
+		}
+
+		targetData.setSubjectCode(subjectCode);
+		targetData.setSubjectName(subjectName);
+
+		targetData.setOutAmount(new Money(sourceData.getOutNumber()));
+		targetData.setInAmount(new Money());
+		targetData.setTotalAmount(targetData.getOutAmount());
+
+		targetData.setDocumentMemo(
+				"付" + sourceData.getProjectName() + subjectName + "," + sourceData.getCapitalProperties());
+
+		targetData.setApproveProject(
+				getApproveProject(targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
+		return new TargetData[]{};
+	}
+
 	private static TargetData build1002P05Target(TargetData targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
 		TargetData _targetData = (TargetData) targetData.clone();
