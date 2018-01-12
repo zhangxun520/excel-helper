@@ -20,4 +20,12 @@ public class StringUtil {
 			return 0.0;
 		}
 	}
+
+	public static String defaultValue(String s, String defaultValue) {
+		if (isEmpty(s)) {
+			return defaultValue;
+		}
+		return s;
+	}
+
 }

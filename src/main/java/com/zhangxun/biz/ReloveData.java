@@ -72,7 +72,22 @@ public class ReloveData {
 				inTargetData.setMemuSortNo(sortNo++);
 				datas.add(inTargetData);
 			}
+			if (sourceData.getTransferNumber() > 0) {
+				TargetData[] transferTargetDatas = buildTransferTarget(targetData, sourceData, mve2Map);
 
+				for (TargetData transferTargetData : transferTargetDatas) {
+					transferTargetData.setMemuSortNo(sortNo++);
+					datas.add(transferTargetData);
+				}
+			}
+			if (sourceData.getTakeNumber() > 0 && sourceData.getOutNumber() <= 0) {
+				TargetData[] takeTargetDatas = buildTakeTarget(targetData, sourceData, mve2Map);
+
+				for (TargetData takeTargetData : takeTargetDatas) {
+					takeTargetData.setMemuSortNo(sortNo++);
+					datas.add(takeTargetData);
+				}
+			}
 		}
 		return datas;
 	}
@@ -118,7 +133,9 @@ public class ReloveData {
 	 * 
 	 * @return
 	 */
-	private static TargetData buildInTarget(TargetData targetData, SourceData sourceData, Map<String, Object> mve2Map) {
+	private static TargetData buildInTarget(TargetData _targetData, SourceData sourceData,
+			Map<String, Object> mve2Map) {
+		TargetData targetData = (TargetData) _targetData.clone();
 		String subjectName = sourceData.getSettleSubject();
 		String subjectCode = null;
 
@@ -148,8 +165,9 @@ public class ReloveData {
 	 * 
 	 * @return
 	 */
-	private static TargetData buildOutTarget(TargetData targetData, SourceData sourceData,
+	private static TargetData buildOutTarget(TargetData _targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
+		TargetData targetData = (TargetData) _targetData.clone();
 		Calendar inDate = Calendar.getInstance();
 		Calendar settleDate = Calendar.getInstance();
 		inDate.setTime(sourceData.getInDate());
@@ -165,7 +183,8 @@ public class ReloveData {
 		String subjectCode = null;
 		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis()) {// 执行跨日期科目替换
 			subjectCode = Constants.T1_REPLACE_SUBJECT_CODE;
-			subjectName = subjectProperties.getProperty(Constants.T1_REPLACE_SUBJECT_CODE, "暂收款");
+			subjectName = StringUtil.defaultValue(
+					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "暂收款");
 		} else {
 			MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
 			if (myData.getKey() != null) {
@@ -192,58 +211,92 @@ public class ReloveData {
 	}
 
 	/**
-	 * 借方(出金)
+	 * 转
 	 * 
 	 * @return
 	 */
-	private static TargetData[] buildTransferTarget(TargetData targetData, SourceData sourceData,
+	private static TargetData[] buildTransferTarget(TargetData _targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
-		Calendar inDate = Calendar.getInstance();
-		Calendar settleDate = Calendar.getInstance();
-		inDate.setTime(sourceData.getInDate());
-		settleDate.setTime(sourceData.getSettleDate());
+		TargetData[] targetDatas = new TargetData[2];
+		TargetData targetData = (TargetData) _targetData.clone();
 
-		String t1mark = configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
-		if (Constants.T1Mark.MONTH.equals(t1mark)) {
-			settleDate.set(Calendar.DATE, 1);
-			inDate.set(Calendar.DATE, 1);
-		}
-
-		String subjectName = sourceData.getSettleSubject();
-		String subjectCode = null;
-		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis()) {// 执行跨日期科目替换
-			subjectCode = Constants.T1_REPLACE_SUBJECT_CODE;
-			subjectName = subjectProperties.getProperty(Constants.T1_REPLACE_SUBJECT_CODE, "暂收款");
-		} else {
-			MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
-			if (myData.getKey() != null) {
-				subjectCode = myData.getKey();
-				subjectName = myData.getValue();
-			} else {
-				targetData.setWarn(true);
-			}
-		}
-
+		// 借方
+		String subjectCode = Constants.TRANSFER_OUT_SUBJECT_CODE;
+		String subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
+				sourceData.getSettleSubject());
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 
-		targetData.setOutAmount(new Money(sourceData.getOutNumber()));
+		targetData.setOutAmount(new Money(sourceData.getTransferNumber()));
 		targetData.setInAmount(new Money());
 		targetData.setTotalAmount(targetData.getOutAmount());
 
-		targetData.setDocumentMemo(
-				"付" + sourceData.getProjectName() + subjectName + "," + sourceData.getCapitalProperties());
+		targetData.setDocumentMemo("收" + sourceData.getProjectName() + "保证金转价款," + sourceData.getCustomerName());
 
 		targetData.setApproveProject(
 				getApproveProject(targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
-		return new TargetData[]{};
+		targetDatas[0] = targetData;
+
+		// 贷方
+		TargetData targetData2 = (TargetData) targetData.clone();
+		subjectCode = Constants.TRANSFER_IN_SUBJECT_CODE;
+		subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
+				sourceData.getSettleSubject());
+		targetData2.setSubjectCode(subjectCode);
+		targetData2.setSubjectName(subjectName);
+		targetData2.setOutAmount(new Money());
+		targetData2.setInAmount(new Money(sourceData.getTransferNumber()));
+		targetDatas[1] = targetData2;
+
+		return targetDatas;
+	}
+
+	/**
+	 * 扣
+	 * 
+	 * @return
+	 */
+	private static TargetData[] buildTakeTarget(TargetData _targetData, SourceData sourceData,
+			Map<String, Object> mve2Map) {
+		TargetData[] targetDatas = new TargetData[2];
+		TargetData targetData = (TargetData) _targetData.clone();
+		// 借方
+		String subjectCode = Constants.TAKE_OUT_SUBJECT_CODE;
+		String subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
+				sourceData.getSettleSubject());
+		targetData.setSubjectCode(subjectCode);
+		targetData.setSubjectName(subjectName);
+
+		targetData.setOutAmount(new Money(sourceData.getTakeNumber()));
+		targetData.setInAmount(new Money());
+		targetData.setTotalAmount(targetData.getOutAmount());
+
+		targetData.setDocumentMemo("收" + sourceData.getProjectName() + "价款扣服务费," + sourceData.getCapitalProperties());
+
+		targetData.setApproveProject(
+				getApproveProject(targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
+		targetDatas[0] = targetData;
+
+		// 贷方
+		TargetData targetData2 = (TargetData) targetData.clone();
+		subjectCode = Constants.TAKE_IN_SUBJECT_CODE;
+		subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
+				sourceData.getSettleSubject());
+		targetData2.setSubjectCode(subjectCode);
+		targetData2.setSubjectName(subjectName);
+		targetData2.setOutAmount(new Money());
+		targetData2.setInAmount(new Money(sourceData.getTakeNumber()));
+		targetDatas[1] = targetData2;
+
+		return targetDatas;
 	}
 
 	private static TargetData build1002P05Target(TargetData targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
 		TargetData _targetData = (TargetData) targetData.clone();
 		_targetData.setSubjectCode(Constants.LFT_SUBJECT_CODE);
-		_targetData.setSubjectName(subjectProperties.getProperty(Constants.LFT_SUBJECT_CODE, "联付通数据"));
+		_targetData.setSubjectName(StringUtil
+				.defaultValue(getPropertiesValueBykey(subjectProperties, Constants.LFT_SUBJECT_CODE, false), "联付通数据"));
 		_targetData.setWarn(false);
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
@@ -319,6 +372,33 @@ public class ReloveData {
 
 		}
 		return new MyMap(null, null);
+	}
+
+	private static String getPropertiesValueBykey(Properties properties, String key, boolean ignoreBlank) {
+		String _value = (String) properties.get(key);
+		if (StringUtil.isEmpty(_value)) {
+			return null;
+		}
+		if (ignoreBlank) {
+			String[] strings = _value.split("\\|");
+			if (strings.length == 1) {
+				return _value;
+			} else if (strings.length >= 2) {
+				return strings[0];
+			}
+		} else {
+			String[] ss = _value.split("\\s+");
+			for (String s : ss) {
+				String[] _ss = s.split("-");
+				if (_ss.length == 1) {
+					return _ss[0];
+				} else if (_ss.length == 2) {
+					return _ss[0];
+				}
+			}
+
+		}
+		return _value;
 	}
 
 }
