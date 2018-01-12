@@ -52,41 +52,41 @@ public class ReloveData {
 			mve2Map.put("customerName", sourceData.getCustomerName());
 			mve2Map.put("capitalProperties", sourceData.getCapitalProperties());
 
-			if (sourceData.getOutNumber() > 0) {// 付款后生成1002.05
-				TargetData outTargetData = buildOutTarget(targetData, sourceData, mve2Map);
-				outTargetData.setMemuSortNo(sortNo++);
-				datas.add(outTargetData);
-				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
-					TargetData _outTargetData = build1002P05Target(outTargetData, sourceData, mve2Map);
-					_outTargetData.setMemuSortNo(sortNo++);
-					datas.add(_outTargetData);
-				}
-			}
+			// 用数组接收处理结果，用于排序收-付-转-扣 借-贷
+			TargetData[] targetDatas = new TargetData[8];
+
+			TargetData inTargetData = null;
 			if (sourceData.getInNumber() > 0) {// 收款后优先成1002.05
-				TargetData inTargetData = buildInTarget(targetData, sourceData, mve2Map);
+				inTargetData = buildInTarget(targetData, sourceData, mve2Map);
 				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
 					TargetData _inTargetData = build1002P05Target(inTargetData, sourceData, mve2Map);
-					_inTargetData.setMemuSortNo(sortNo++);
-					datas.add(_inTargetData);
+					targetDatas[0] = _inTargetData;
 				}
-				inTargetData.setMemuSortNo(sortNo++);
-				datas.add(inTargetData);
+				targetDatas[1] = inTargetData;
+			}
+			if (sourceData.getOutNumber() > 0) {// 付款后生成1002.05
+				TargetData outTargetData = buildOutTarget(targetData, sourceData, mve2Map);
+				targetDatas[2] = outTargetData;
+				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
+					TargetData _outTargetData = build1002P05Target(outTargetData, sourceData, mve2Map);
+					targetDatas[3] = _outTargetData;
+				}
 			}
 			if (sourceData.getTransferNumber() > 0) {
-				TargetData[] transferTargetDatas = buildTransferTarget(targetData, sourceData, mve2Map);
-
-				for (TargetData transferTargetData : transferTargetDatas) {
-					transferTargetData.setMemuSortNo(sortNo++);
-					datas.add(transferTargetData);
-				}
+				buildTransferTarget(targetData, sourceData, mve2Map, targetDatas);
 			}
 			if (sourceData.getTakeNumber() > 0 && sourceData.getOutNumber() <= 0) {
 				TargetData[] takeTargetDatas = buildTakeTarget(targetData, sourceData, mve2Map);
+				targetDatas[6] = takeTargetDatas[0];
+				targetDatas[7] = takeTargetDatas[1];
 
-				for (TargetData takeTargetData : takeTargetDatas) {
-					takeTargetData.setMemuSortNo(sortNo++);
-					datas.add(takeTargetData);
+			}
+			for (TargetData _targetData : targetDatas) {
+				if (_targetData == null) {
+					continue;
 				}
+				_targetData.setMemuSortNo(sortNo++);
+				datas.add(_targetData);
 			}
 		}
 		return datas;
@@ -150,7 +150,7 @@ public class ReloveData {
 		targetData.setSubjectName(subjectName);
 		targetData.setOutAmount(new Money());
 		targetData.setInAmount(new Money(sourceData.getInNumber()));
-		targetData.setTotalAmount(targetData.getInAmount());
+		targetData.setTotalAmount(new Money(sourceData.getInNumber()));
 		targetData
 				.setDocumentMemo("收" + sourceData.getProjectName() + subjectName + "," + sourceData.getCustomerName());
 
@@ -200,7 +200,7 @@ public class ReloveData {
 
 		targetData.setOutAmount(new Money(sourceData.getOutNumber()));
 		targetData.setInAmount(new Money());
-		targetData.setTotalAmount(targetData.getOutAmount());
+		targetData.setTotalAmount(new Money(sourceData.getOutNumber()));
 
 		targetData.setDocumentMemo(
 				"付" + sourceData.getProjectName() + subjectName + "," + sourceData.getCapitalProperties());
@@ -215,9 +215,8 @@ public class ReloveData {
 	 * 
 	 * @return
 	 */
-	private static TargetData[] buildTransferTarget(TargetData _targetData, SourceData sourceData,
-			Map<String, Object> mve2Map) {
-		TargetData[] targetDatas = new TargetData[2];
+	private static void buildTransferTarget(TargetData _targetData, SourceData sourceData, Map<String, Object> mve2Map,
+			TargetData[] targetDatas) {
 		TargetData targetData = (TargetData) _targetData.clone();
 
 		// 借方
@@ -235,20 +234,30 @@ public class ReloveData {
 
 		targetData.setApproveProject(
 				getApproveProject(targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
-		targetDatas[0] = targetData;
+		targetDatas[4] = targetData;
 
 		// 贷方
-		TargetData targetData2 = (TargetData) targetData.clone();
-		subjectCode = Constants.TRANSFER_IN_SUBJECT_CODE;
-		subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
-				sourceData.getSettleSubject());
-		targetData2.setSubjectCode(subjectCode);
-		targetData2.setSubjectName(subjectName);
-		targetData2.setOutAmount(new Money());
-		targetData2.setInAmount(new Money(sourceData.getTransferNumber()));
-		targetDatas[1] = targetData2;
+		// 转-收和转同时有数据,且收科目为价款,合并记录
 
-		return targetDatas;
+		TargetData inTargetData = targetDatas[1];
+
+		if (sourceData.getInNumber() > 0 && inTargetData != null
+				&& inTargetData.getSubjectCode().equals(Constants.TRANSFER_IN_SUBJECT_CODE)) {
+			inTargetData.setInAmount(inTargetData.getInAmount().add(new Money(sourceData.getTransferNumber())));
+			inTargetData.setTotalAmount(inTargetData.getTotalAmount().add(new Money(sourceData.getTransferNumber())));
+			targetDatas[5] = inTargetData;
+			targetDatas[1] = null;
+		} else {
+			TargetData targetData2 = (TargetData) targetData.clone();
+			subjectCode = Constants.TRANSFER_IN_SUBJECT_CODE;
+			subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
+					sourceData.getSettleSubject());
+			targetData2.setSubjectCode(subjectCode);
+			targetData2.setSubjectName(subjectName);
+			targetData2.setOutAmount(new Money());
+			targetData2.setInAmount(new Money(sourceData.getTransferNumber()));
+			targetDatas[5] = targetData2;
+		}
 	}
 
 	/**
@@ -301,8 +310,9 @@ public class ReloveData {
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 
-		_targetData.setInAmount(targetData.getOutAmount());
-		_targetData.setOutAmount(targetData.getInAmount());
+		_targetData.setInAmount(new Money(sourceData.getOutNumber()));
+		_targetData.setOutAmount(new Money(sourceData.getInNumber()));
+		_targetData.setTotalAmount(new Money(sourceData.getInNumber()).add(new Money(sourceData.getOutNumber())));
 		return _targetData;
 	}
 
