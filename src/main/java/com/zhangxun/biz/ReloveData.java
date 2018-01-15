@@ -238,7 +238,6 @@ public class ReloveData {
 
 		// 贷方
 		// 转-收和转同时有数据,且收科目为价款,合并记录
-
 		TargetData inTargetData = targetDatas[1];
 
 		if (sourceData.getInNumber() > 0 && inTargetData != null
