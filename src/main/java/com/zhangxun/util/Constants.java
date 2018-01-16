@@ -65,7 +65,7 @@ public class Constants {
 		/**
 		 * 操作员
 		 */
-		public static final String OPERATOR = "operator";
+		public static final String OPERATOR = "opName";
 
 		public static final String SORT_NO = "sortNo";
 

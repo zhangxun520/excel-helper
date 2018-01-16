@@ -146,6 +146,7 @@ public class ReloveData {
 		} else {
 			targetData.setWarn(true);
 		}
+
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 		targetData.setOutAmount(new Money());
@@ -168,31 +169,15 @@ public class ReloveData {
 	private static TargetData buildOutTarget(TargetData _targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
 		TargetData targetData = (TargetData) _targetData.clone();
-		Calendar inDate = Calendar.getInstance();
-		Calendar settleDate = Calendar.getInstance();
-		inDate.setTime(sourceData.getInDate());
-		settleDate.setTime(sourceData.getSettleDate());
-
-		String t1mark = configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
-		if (Constants.T1Mark.MONTH.equals(t1mark)) {
-			settleDate.set(Calendar.DATE, 1);
-			inDate.set(Calendar.DATE, 1);
-		}
 
 		String subjectName = sourceData.getSettleSubject();
 		String subjectCode = null;
-		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis()) {// 执行跨日期科目替换
-			subjectCode = Constants.T1_REPLACE_SUBJECT_CODE;
-			subjectName = StringUtil.defaultValue(
-					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "暂收款");
+		MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
+		if (myData.getKey() != null) {
+			subjectCode = myData.getKey();
+			subjectName = myData.getValue();
 		} else {
-			MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
-			if (myData.getKey() != null) {
-				subjectCode = myData.getKey();
-				subjectName = myData.getValue();
-			} else {
-				targetData.setWarn(true);
-			}
+			targetData.setWarn(true);
 		}
 
 		targetData.setSubjectCode(subjectCode);
@@ -302,9 +287,27 @@ public class ReloveData {
 	private static TargetData build1002P05Target(TargetData targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
 		TargetData _targetData = (TargetData) targetData.clone();
-		_targetData.setSubjectCode(Constants.LFT_SUBJECT_CODE);
-		_targetData.setSubjectName(StringUtil
-				.defaultValue(getPropertiesValueBykey(subjectProperties, Constants.LFT_SUBJECT_CODE, false), "联付通数据"));
+
+		Calendar inDate = Calendar.getInstance();
+		Calendar settleDate = Calendar.getInstance();
+		inDate.setTime(sourceData.getInDate());
+		settleDate.setTime(sourceData.getSettleDate());
+
+		String t1mark = configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
+		if (Constants.T1Mark.MONTH.equals(t1mark)) {
+			settleDate.set(Calendar.DATE, 1);
+			inDate.set(Calendar.DATE, 1);
+		}
+		// 执行跨日期科目替换,
+		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis() && targetData.getInAmount().getCent() > 0) {
+			_targetData.setSubjectCode(Constants.T1_REPLACE_SUBJECT_CODE);
+			_targetData.setSubjectName(StringUtil.defaultValue(
+					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "暂收款"));
+		} else {
+			_targetData.setSubjectCode(Constants.LFT_SUBJECT_CODE);
+			_targetData.setSubjectName(StringUtil.defaultValue(
+					getPropertiesValueBykey(subjectProperties, Constants.LFT_SUBJECT_CODE, false), "联付通数据"));
+		}
 		_targetData.setWarn(false);
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
