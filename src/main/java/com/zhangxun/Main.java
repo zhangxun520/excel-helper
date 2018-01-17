@@ -8,7 +8,9 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -29,6 +31,7 @@ import javax.swing.table.DefaultTableModel;
 
 import com.zhangxun.biz.CreateExcel;
 import com.zhangxun.biz.ReloveData;
+import com.zhangxun.component.ColumnSetting;
 import com.zhangxun.model.TargetData;
 import com.zhangxun.util.Money;
 import com.zhangxun.util.StringUtil;
@@ -37,6 +40,7 @@ public class Main extends JFrame implements ActionListener {
 	private static final long serialVersionUID = -5473788932682692935L;
 
 	private JButton chooseFileButton;
+	private JButton columnSettingButton;
 	private JTextArea chooseFileText;
 	private JButton saveFileButton;
 	private JTextArea saveFileText;
@@ -49,12 +53,15 @@ public class Main extends JFrame implements ActionListener {
 	private JTextArea totalCountText;
 	private JTextArea totalInText;
 	private JTextArea totalOutText;
+	private JTextArea totalText;
 
-	private static String[] columnNames = { "凭证日期", "会计年度", "会计期间", "凭证字", "凭证号", "科目代码", "科目名称", "币别代码", "币别名称",
-			"原币金额", "借方", "贷方", "制单", "审核", "核准", "出纳", "经办", "结算方式", "结算号", "凭证摘要", "数量", "数量单位", "单价", "参考信息", "业务日期",
+	public static String[] columnNames = { "凭证日期", "会计年度", "会计期间", "凭证字", "凭证号", "科目代码", "科目名称", "币别代码", "币别名称", "原币金额",
+			"借方", "贷方", "制单", "审核", "核准", "出纳", "经办", "结算方式", "结算号", "凭证摘要", "数量", "数量单位", "单价", "参考信息", "业务日期",
 			"往来业务编号", "附件数", "序号", "系统模块", "业务描述", "汇率类型", "汇率", "分录序号", "核算项目", "过账", "机制凭证", "现金流量" };
 
 	private static final String FILE_NAME = "凭证";
+
+	public Map<String, JFrame> frames = new HashMap<>();
 
 	public static void main(String[] args) {
 		new Main();
@@ -65,7 +72,7 @@ public class Main extends JFrame implements ActionListener {
 	 */
 	public Main() {
 		setSize(1200, 620);
-		setLocation(100, 100);
+		setLocationRelativeTo(null);
 		setBackground(Color.WHITE);
 		setTitle("EXCEL--工具");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -101,6 +108,11 @@ public class Main extends JFrame implements ActionListener {
 		chooseFileButton.addActionListener(this);
 		add(chooseFileButton);
 
+		columnSettingButton = new JButton("列显示设置");
+		columnSettingButton.setBounds(460, 20, 100, 30);
+		columnSettingButton.addActionListener(this);
+		add(columnSettingButton);
+
 		JScrollPane scrollPane = new JScrollPane(); // 支持滚动
 		scrollPane.setBounds(10, 60, 1160, 400);
 		add(scrollPane);
@@ -115,7 +127,7 @@ public class Main extends JFrame implements ActionListener {
 
 		myTableModel = new DefaultTableModel(columnNames, 0);
 		table.setModel(myTableModel);
-
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		scrollPane.setViewportView(table); // 支持滚动
 
 		JLabel label3 = new JLabel("总条数:");
@@ -136,6 +148,7 @@ public class Main extends JFrame implements ActionListener {
 		totalOutText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
 		totalOutText.setDisabledTextColor(Color.GRAY);
 		add(totalOutText);
+
 		JLabel label5 = new JLabel("贷方总计:");
 		label5.setBounds(370, 475, 60, 30);
 		add(label5);
@@ -145,6 +158,16 @@ public class Main extends JFrame implements ActionListener {
 		totalInText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
 		totalInText.setDisabledTextColor(Color.GRAY);
 		add(totalInText);
+
+		JLabel label6 = new JLabel("总计:");
+		label6.setBounds(580, 475, 30, 30);
+		add(label6);
+
+		totalText = new JTextArea("");
+		totalText.setBounds(620, 480, 100, 20);
+		totalText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
+		totalText.setDisabledTextColor(Color.GRAY);
+		add(totalText);
 
 		JLabel label2 = new JLabel("保存路径:");
 		label2.setBounds(10, 510, 60, 30);
@@ -194,6 +217,12 @@ public class Main extends JFrame implements ActionListener {
 					JOptionPane.showMessageDialog(this, "不是EXCEL文件", "错误", JOptionPane.ERROR_MESSAGE);
 				}
 			}
+		} else if (e.getSource() == columnSettingButton) {
+			if (frames.get(ColumnSetting.class.getName()) == null) {
+				frames.put(ColumnSetting.class.getName(), new ColumnSetting(this));
+			} else {
+				frames.get(ColumnSetting.class.getName()).setVisible(true);
+			}
 		} else if (e.getSource() == saveFileButton) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setFileSelectionMode(1);
@@ -218,8 +247,18 @@ public class Main extends JFrame implements ActionListener {
 				return;
 			}
 
-			if (!totalInText.getText().equals(totalOutText.getText())) {
+			Money totalIn = new Money(totalInText.getText());
+			Money totalOut = new Money(totalOutText.getText());
+			Money total = new Money(totalText.getText());
+
+			if (!totalIn.equals(totalOut)) {
 				if (JOptionPane.showConfirmDialog(this, "出入金不匹配,是否保存?", "警告", JOptionPane.YES_NO_OPTION) != 0) {
+					return;
+				}
+			}
+
+			if (!totalIn.addTo(totalOut).equals(total)) {
+				if (JOptionPane.showConfirmDialog(this, "出入金与合计不匹配,是否保存?", "警告", JOptionPane.YES_NO_OPTION) != 0) {
 					return;
 				}
 			}
@@ -237,9 +276,7 @@ public class Main extends JFrame implements ActionListener {
 				JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.WARNING_MESSAGE);
 			}
 		} else if (e.getSource() == closeButton) {
-			if (JOptionPane.showConfirmDialog(this, "是否关闭?", "关闭", JOptionPane.YES_NO_OPTION) == 0) {
-				System.exit(0);
-			}
+			System.exit(0);
 		}
 	}
 
@@ -258,6 +295,7 @@ public class Main extends JFrame implements ActionListener {
 
 			Money inCount = new Money(0);
 			Money outCount = new Money(0);
+			Money totalCount = new Money(0);
 
 			while (myTableModel.getRowCount() > 0) {
 				myTableModel.removeRow(myTableModel.getRowCount() - 1);
@@ -269,6 +307,7 @@ public class Main extends JFrame implements ActionListener {
 				vData[i] = datas.get(i).getRow(columnNames.length);
 				inCount.addTo(datas.get(i).getInAmount());
 				outCount.addTo(datas.get(i).getOutAmount());
+				totalCount.addTo(datas.get(i).getTotalAmount());
 				myTableModel.addRow(vData[i]);
 				if (datas.get(i).isWarn()) {
 					warnIndex.add(i);
@@ -279,13 +318,14 @@ public class Main extends JFrame implements ActionListener {
 			totalCountText.setText(String.valueOf(datas.size()));
 			totalInText.setText(inCount.toString());
 			totalOutText.setText(outCount.toString());
+			totalText.setText(totalCount.toString());
 
 			table.getModel().addTableModelListener(new TableModelListener() {
 
 				@Override
 				public void tableChanged(TableModelEvent e) {
 					if (e.getType() == TableModelEvent.UPDATE) {
-						if (e.getColumn() == 11 || e.getColumn() == 10) {
+						if (e.getColumn() == 11 || e.getColumn() == 10 || e.getColumn() == 9) {
 							Money sum = new Money();
 							for (int i = 0; i < table.getRowCount(); i++) {
 								Object data = myTableModel.getValueAt(i, e.getColumn());
@@ -302,6 +342,8 @@ public class Main extends JFrame implements ActionListener {
 								totalInText.setText(sum.toString());
 							} else if (e.getColumn() == 10) {
 								totalOutText.setText(sum.toString());
+							} else if (e.getColumn() == 9) {
+								totalText.setText(sum.toString());
 							}
 
 						}
@@ -342,5 +384,9 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public JTable getTable() {
+		return table;
 	}
 }

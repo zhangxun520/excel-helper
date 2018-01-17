@@ -11,6 +11,8 @@ import java.util.Properties;
  * @author zhangXun
  */
 public class PropertiesUtil {
+	public static Properties configProperties = PropertiesUtil.getProperties(Constants.CONFIG_FILE_NAME);
+
 	public static Properties getProperties(String fileName) {
 		Properties properties = new Properties();
 		try {

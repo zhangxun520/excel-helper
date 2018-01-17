@@ -32,7 +32,6 @@ import com.zhangxun.util.StringUtil;
  */
 public class ReloveData {
 
-	private static Properties configProperties = PropertiesUtil.getProperties(Constants.CONFIG_FILE_NAME);
 	private static Properties subjectProperties = PropertiesUtil.getProperties(Constants.SUBJECT_FILE_NAME);
 	private static Properties subjectAppProjectProperties = PropertiesUtil
 			.getProperties(Constants.SUBJECT_APPROVEPROJECT);
@@ -40,7 +39,7 @@ public class ReloveData {
 
 	public static List<TargetData> relove(File file) throws IOException, MyException {
 		List<SourceData> sourceDatas = ReadData.read(file,
-				Integer.parseInt(configProperties.getProperty(Constants.START_ROW, "3")));
+				Integer.parseInt(PropertiesUtil.configProperties.getProperty(Constants.START_ROW, "3")));
 		List<TargetData> datas = new ArrayList<TargetData>();
 		Calendar calendar = Calendar.getInstance();
 		Map<String, Object> mve2Map = new HashMap<>();
@@ -104,13 +103,14 @@ public class ReloveData {
 		targetData.setDocumentDate(calendar.getTime());
 		targetData.setAccountYear(calendar.get(Calendar.YEAR));
 		targetData.setAccountMonth(calendar.get(Calendar.MONTH) + 1);
-		targetData.setDocumentString(configProperties.getProperty(Constants.TargetData.DOCUMENT_STRING, "记"));
+		targetData.setDocumentString(
+				PropertiesUtil.configProperties.getProperty(Constants.TargetData.DOCUMENT_STRING, "记"));
 		targetData.setDocumentCode(1);
 
 		targetData.setCurrencyCode("RMB");
 		targetData.setCurrencyName("人民币");
 
-		targetData.setOperator(configProperties.getProperty(Constants.TargetData.OPERATOR, "刘毅"));
+		targetData.setOperator(PropertiesUtil.configProperties.getProperty(Constants.TargetData.OPERATOR, "刘毅"));
 		targetData.setAuditor("NONE");
 		targetData.setApprover("NONE");
 		targetData.setCashier("NONE");
@@ -121,8 +121,10 @@ public class ReloveData {
 		targetData.setPrice("0");
 		targetData.setBusinessDate(sourceData.getInDate());
 		targetData.setAppendCount(0);
-		targetData.setSortNo(Integer.parseInt(configProperties.getProperty(Constants.TargetData.SORT_NO, "1001")));
-		targetData.setExchangeType(configProperties.getProperty(Constants.TargetData.EXCHANGE_TYPE, "公司汇率"));
+		targetData.setSortNo(
+				Integer.parseInt(PropertiesUtil.configProperties.getProperty(Constants.TargetData.SORT_NO, "1001")));
+		targetData.setExchangeType(
+				PropertiesUtil.configProperties.getProperty(Constants.TargetData.EXCHANGE_TYPE, "公司汇率"));
 		targetData.setExchange("1");
 		targetData.setPosting(0);
 		return targetData;
@@ -293,7 +295,7 @@ public class ReloveData {
 		inDate.setTime(sourceData.getInDate());
 		settleDate.setTime(sourceData.getSettleDate());
 
-		String t1mark = configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
+		String t1mark = PropertiesUtil.configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
 		if (Constants.T1Mark.MONTH.equals(t1mark)) {
 			settleDate.set(Calendar.DATE, 1);
 			inDate.set(Calendar.DATE, 1);

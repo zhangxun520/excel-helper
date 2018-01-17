@@ -2,13 +2,6 @@ package com.zhangxun.util;
 
 public class Constants {
 
-	public static final String T1_MARK = "t1mark";
-
-	/**
-	 * 开始行
-	 */
-	public static final String START_ROW = "startRow";
-
 	public static final String CONFIG_FILE_NAME = "excel-helper.config";
 
 	/**
@@ -25,6 +18,18 @@ public class Constants {
 	 * 机构配置
 	 */
 	public static final String INSTITUTION_FILE_NAME = "institution.config";
+
+	public static final String T1_MARK = "t1mark";
+
+	/**
+	 * 开始行
+	 */
+	public static final String START_ROW = "startRow";
+
+	/**
+	 * 列配置
+	 */
+	public static final String COLUMN_SETTING = "columnSetting";
 
 	/**
 	 * 额外默认生成数据列的科目代码
