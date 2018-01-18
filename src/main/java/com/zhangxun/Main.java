@@ -28,6 +28,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 import com.zhangxun.biz.CreateExcel;
 import com.zhangxun.biz.ReloveData;
@@ -128,6 +129,20 @@ public class Main extends JFrame implements ActionListener {
 		myTableModel = new DefaultTableModel(columnNames, 0);
 		table.setModel(myTableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+		for (int i = 0; i < columnNames.length; i++) {
+			if (!ColumnSetting.getDefaultIntegers().contains(i)) {
+				TableColumn tableColumn = table.getColumnModel().getColumn(i);
+				TableColumn column_id_header = table.getTableHeader().getColumnModel().getColumn(i);
+				tableColumn.setMinWidth(0);
+				tableColumn.setPreferredWidth(0);
+				tableColumn.setMaxWidth(0);
+				column_id_header.setMaxWidth(0);
+				column_id_header.setPreferredWidth(0);
+				column_id_header.setMinWidth(0);
+			}
+		}
+
 		scrollPane.setViewportView(table); // 支持滚动
 
 		JLabel label3 = new JLabel("总条数:");

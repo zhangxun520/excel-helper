@@ -25,8 +25,7 @@ public class ColumnSetting extends JFrame implements ActionListener {
 	private JButton noChooseButton;
 	private JButton closeButton;
 
-	private Integer[] defaultColumn = new Integer[] { 0, 5, 6, 9, 10, 11, 12, 19, 24, 32, 33 };
-
+	private static List<Integer> defaultIntegers = Arrays.asList(new Integer[] { 5, 6, 9, 10, 11, 19, 32, 33 });
 	private JCheckBox[] checkBoxs = new JCheckBox[Main.columnNames.length];
 
 	private Main main;
@@ -56,7 +55,7 @@ public class ColumnSetting extends JFrame implements ActionListener {
 		JPanel jPanel = new JPanel(new GridLayout(0, 6));
 		jPanel.setBounds(24, 10, 700, 220);
 		for (int i = 0; i < Main.columnNames.length; i++) {
-			JCheckBox ck = new JCheckBox(Main.columnNames[i] + i, true);
+			JCheckBox ck = new JCheckBox(Main.columnNames[i] + i, defaultIntegers.contains(i));
 			ck.addItemListener(new MyItemListener(main));
 			checkBoxs[i] = ck;
 			jPanel.add(ck);
@@ -90,7 +89,6 @@ public class ColumnSetting extends JFrame implements ActionListener {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == defaultButton) {
-			List<Integer> defaultIntegers = Arrays.asList(defaultColumn);
 			for (int i = 0; i < checkBoxs.length; i++) {
 				if (defaultIntegers.contains(i)) {
 					checkBoxs[i].setSelected(true);
@@ -113,6 +111,10 @@ public class ColumnSetting extends JFrame implements ActionListener {
 		} else if (e.getSource() == closeButton) {
 			setVisible(false);
 		}
+	}
+
+	public static List<Integer> getDefaultIntegers() {
+		return defaultIntegers;
 	}
 
 	public static void main(String[] args) {
