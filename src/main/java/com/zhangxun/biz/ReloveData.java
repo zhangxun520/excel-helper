@@ -316,9 +316,11 @@ public class ReloveData {
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 
-		_targetData.setInAmount(new Money(sourceData.getOutNumber()));
-		_targetData.setOutAmount(new Money(sourceData.getInNumber()));
-		_targetData.setTotalAmount(new Money(sourceData.getInNumber()).add(new Money(sourceData.getOutNumber())));
+		_targetData.setInAmount(targetData.getOutAmount());
+		_targetData.setOutAmount(targetData.getInAmount());
+		_targetData.setTotalAmount(
+				new Money(targetData.getOutAmount().getCent() / 100, (int) (targetData.getOutAmount().getCent() % 100))
+						.addTo(targetData.getInAmount()));
 		return _targetData;
 	}
 
