@@ -279,6 +279,8 @@ public class ReloveData {
 				sourceData.getSettleSubject());
 		targetData2.setSubjectCode(subjectCode);
 		targetData2.setSubjectName(subjectName);
+		targetData2.setApproveProject(
+				getApproveProject(targetData2.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 		targetData2.setOutAmount(new Money());
 		targetData2.setInAmount(new Money(sourceData.getTakeNumber()));
 		targetDatas[1] = targetData2;
