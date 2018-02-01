@@ -242,6 +242,8 @@ public class ReloveData {
 			targetData2.setSubjectName(subjectName);
 			targetData2.setOutAmount(new Money());
 			targetData2.setInAmount(new Money(sourceData.getTransferNumber()));
+			targetData2.setApproveProject(
+					getApproveProject(targetData2.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 			targetDatas[5] = targetData2;
 		}
 	}
