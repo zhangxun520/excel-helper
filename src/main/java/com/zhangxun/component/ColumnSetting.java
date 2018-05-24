@@ -13,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
 import com.zhangxun.Main;
@@ -25,7 +26,8 @@ public class ColumnSetting extends JFrame implements ActionListener {
 	private JButton noChooseButton;
 	private JButton closeButton;
 
-	private static List<Integer> defaultIntegers = Arrays.asList(new Integer[] { 5, 6, 9, 10, 11, 19, 32, 33 });
+	private static List<String> defaultIntegers = Arrays
+			.asList(new String[] { "会计年度","会计期间","科目代码", "科目名称", "原币金额", "借方", "贷方", "凭证摘要", "分录序号", "核算项目" });
 	private JCheckBox[] checkBoxs = new JCheckBox[Main.columnNames.length];
 
 	private Main main;
@@ -55,7 +57,7 @@ public class ColumnSetting extends JFrame implements ActionListener {
 		JPanel jPanel = new JPanel(new GridLayout(0, 6));
 		jPanel.setBounds(24, 10, 700, 220);
 		for (int i = 0; i < Main.columnNames.length; i++) {
-			JCheckBox ck = new JCheckBox(Main.columnNames[i] + i, defaultIntegers.contains(i));
+			JCheckBox ck = new JCheckBox(Main.columnNames[i], defaultIntegers.contains(Main.columnNames[i]));
 			ck.addItemListener(new MyItemListener(main));
 			checkBoxs[i] = ck;
 			jPanel.add(ck);
@@ -82,6 +84,8 @@ public class ColumnSetting extends JFrame implements ActionListener {
 		closeButton.setBounds(300, 250, 80, 30);
 		closeButton.addActionListener(this);
 		add(closeButton);
+
+		defaultButton.doClick();
 	}
 
 	/**
@@ -90,7 +94,7 @@ public class ColumnSetting extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == defaultButton) {
 			for (int i = 0; i < checkBoxs.length; i++) {
-				if (defaultIntegers.contains(i)) {
+				if (defaultIntegers.contains(checkBoxs[i].getText())) {
 					checkBoxs[i].setSelected(true);
 				} else {
 					checkBoxs[i].setSelected(false);
@@ -113,13 +117,10 @@ public class ColumnSetting extends JFrame implements ActionListener {
 		}
 	}
 
-	public static List<Integer> getDefaultIntegers() {
+	public static List<String> getDefaultIntegers() {
 		return defaultIntegers;
 	}
 
-	public static void main(String[] args) {
-		System.out.println("123122aa12aaa".replaceAll("[^0-9]", ""));
-	}
 }
 
 class MyItemListener implements ItemListener {
@@ -132,22 +133,22 @@ class MyItemListener implements ItemListener {
 
 	public void itemStateChanged(ItemEvent e) {
 		JCheckBox jcb = (JCheckBox) e.getItem();// 将得到的事件强制转化为JCheckBox类
-		int num = Integer.parseInt(jcb.getText().replaceAll("[^0-9]", ""));
+		int num = ((DefaultTableModel) (main.getTable().getModel())).findColumn(jcb.getText());
 		TableColumn tableColumn = main.getTable().getColumnModel().getColumn(num);
 		TableColumn column_id_header = main.getTable().getTableHeader().getColumnModel().getColumn(num);
 		if (jcb.isSelected()) {// 判断是否被选择
 			tableColumn.setMinWidth(100);
-			tableColumn.setWidth(100);
+			//tableColumn.setWidth(100);
 			tableColumn.setPreferredWidth(100);
-			tableColumn.setMaxWidth(100);
-			column_id_header.setMaxWidth(100);
+			//tableColumn.setMaxWidth(100);
+			//column_id_header.setMaxWidth(100);
 			column_id_header.setPreferredWidth(100);
 			column_id_header.setMinWidth(100);
 		} else {
 			tableColumn.setMinWidth(0);
 			tableColumn.setPreferredWidth(0);
-			tableColumn.setMaxWidth(0);
-			column_id_header.setMaxWidth(0);
+			//tableColumn.setMaxWidth(0);
+			//column_id_header.setMaxWidth(0);
 			column_id_header.setPreferredWidth(0);
 			column_id_header.setMinWidth(0);
 		}

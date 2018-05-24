@@ -1,7 +1,10 @@
 package com.zhangxun;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -16,9 +19,8 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -35,26 +37,28 @@ import com.zhangxun.biz.ReloveData;
 import com.zhangxun.component.ColumnSetting;
 import com.zhangxun.model.TargetData;
 import com.zhangxun.util.Money;
-import com.zhangxun.util.StringUtil;
 
 public class Main extends JFrame implements ActionListener {
 	private static final long serialVersionUID = -5473788932682692935L;
 
 	private JButton chooseFileButton;
 	private JButton columnSettingButton;
+	private JButton addButton;
+	private JButton copyButton;
+	private JButton removeButton;
 	private JTextArea chooseFileText;
-	private JButton saveFileButton;
-	private JTextArea saveFileText;
 	private JTable table;
 	private DefaultTableModel myTableModel;
 
 	private JButton saveButton;
 	private JButton closeButton;
 
-	private JTextArea totalCountText;
-	private JTextArea totalInText;
-	private JTextArea totalOutText;
-	private JTextArea totalText;
+	private JLabel totalCountText;
+	private JTextArea disparityText;
+	private JTextArea totalDisparityText;
+	private Money inAmount = new Money(0);
+	private Money outAmount = new Money(0);
+	private Money totalAmount = new Money(0);
 
 	public static String[] columnNames = { "凭证日期", "会计年度", "会计期间", "凭证字", "凭证号", "科目代码", "科目名称", "币别代码", "币别名称", "原币金额",
 			"借方", "贷方", "制单", "审核", "核准", "出纳", "经办", "结算方式", "结算号", "凭证摘要", "数量", "数量单位", "单价", "参考信息", "业务日期",
@@ -73,12 +77,13 @@ public class Main extends JFrame implements ActionListener {
 	 */
 	public Main() {
 		setSize(1200, 620);
+		setMinimumSize(new Dimension(1200, 620));
 		setLocationRelativeTo(null);
 		setBackground(Color.WHITE);
 		setTitle("EXCEL--工具");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setLayout(null);
-		setResizable(false);
+		// setLayout(null);
+		// setResizable(false);
 		initComponent();
 		setVisible(true);
 	}
@@ -87,36 +92,42 @@ public class Main extends JFrame implements ActionListener {
 	 * 初始化组件
 	 */
 	private void initComponent() {
-		JMenuBar jMenuBar = new JMenuBar();
-		JMenu initMenu = new JMenu("初始化"), settingMenu = new JMenu("设置");
-		jMenuBar.add(initMenu);
-		jMenuBar.add(settingMenu);
-		// setJMenuBar(jMenuBar);
-
+		JPanel topJPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JLabel label = new JLabel("源文件:");
 		label.setBounds(10, 20, 60, 30);
-		add(label);
+		topJPanel.add(label);
 
-		chooseFileText = new JTextArea(" 选择文件");
-		chooseFileText.setBounds(80, 25, 250, 20);
+		chooseFileText = new JTextArea(" 选择文件                               ");
 		chooseFileText.setEditable(false);
 		chooseFileText.setDisabledTextColor(Color.GRAY);
-		chooseFileText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		add(chooseFileText);
+		chooseFileText.setBorder(new LineBorder(new Color(127, 157, 185), 1, false));
+		topJPanel.add(chooseFileText);
 
 		chooseFileButton = new JButton("选择文件");
-		chooseFileButton.setBounds(340, 20, 100, 30);
 		chooseFileButton.addActionListener(this);
-		add(chooseFileButton);
+		topJPanel.add(chooseFileButton);
 
 		columnSettingButton = new JButton("列显示设置");
-		columnSettingButton.setBounds(460, 20, 100, 30);
 		columnSettingButton.addActionListener(this);
-		add(columnSettingButton);
+		topJPanel.add(columnSettingButton);
+
+		addButton = new JButton("添加");
+		addButton.addActionListener(this);
+		topJPanel.add(addButton);
+
+		copyButton = new JButton("复制添加");
+		copyButton.addActionListener(this);
+		topJPanel.add(copyButton);
+
+		removeButton = new JButton("移除");
+		removeButton.addActionListener(this);
+		topJPanel.add(removeButton);
+
+		add(topJPanel, BorderLayout.NORTH);
 
 		JScrollPane scrollPane = new JScrollPane(); // 支持滚动
 		scrollPane.setBounds(10, 60, 1160, 400);
-		add(scrollPane);
+		add(scrollPane, BorderLayout.CENTER);
 
 		table = new JTable(); // 自定义的表格
 
@@ -131,13 +142,13 @@ public class Main extends JFrame implements ActionListener {
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
 		for (int i = 0; i < columnNames.length; i++) {
-			if (!ColumnSetting.getDefaultIntegers().contains(i)) {
+			if (!ColumnSetting.getDefaultIntegers().contains(columnNames[i])) {
 				TableColumn tableColumn = table.getColumnModel().getColumn(i);
 				TableColumn column_id_header = table.getTableHeader().getColumnModel().getColumn(i);
 				tableColumn.setMinWidth(0);
 				tableColumn.setPreferredWidth(0);
-				tableColumn.setMaxWidth(0);
-				column_id_header.setMaxWidth(0);
+				//tableColumn.setMaxWidth(0);
+				//column_id_header.setMaxWidth(0);
 				column_id_header.setPreferredWidth(0);
 				column_id_header.setMinWidth(0);
 			}
@@ -145,76 +156,54 @@ public class Main extends JFrame implements ActionListener {
 
 		scrollPane.setViewportView(table); // 支持滚动
 
+		JPanel footJPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
 		JLabel label3 = new JLabel("总条数:");
-		label3.setBounds(10, 475, 60, 30);
-		add(label3);
+		footJPanel.add(label3);
 
-		totalCountText = new JTextArea("");
-		totalCountText.setBounds(80, 480, 100, 20);
-		totalCountText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		totalCountText.setDisabledTextColor(Color.GRAY);
-		add(totalCountText);
-		JLabel label4 = new JLabel("借方总计:");
+		totalCountText = new JLabel("0");
+		footJPanel.add(totalCountText);
+
+		JLabel label4 = new JLabel("     ");
 		label4.setBounds(190, 475, 60, 30);
-		add(label4);
+		footJPanel.add(label4);
 
-		totalOutText = new JTextArea("");
-		totalOutText.setBounds(260, 480, 100, 20);
-		totalOutText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		totalOutText.setDisabledTextColor(Color.GRAY);
-		add(totalOutText);
+		JLabel label5 = new JLabel("借-贷差值:");
+		footJPanel.add(label5);
 
-		JLabel label5 = new JLabel("贷方总计:");
-		label5.setBounds(370, 475, 60, 30);
-		add(label5);
+		disparityText = new JTextArea("0");
+		disparityText.setBorder(new LineBorder(new Color(127, 157, 185), 1, false));
+		disparityText.setDisabledTextColor(Color.GRAY);
+		footJPanel.add(disparityText);
 
-		totalInText = new JTextArea("");
-		totalInText.setBounds(440, 480, 100, 20);
-		totalInText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		totalInText.setDisabledTextColor(Color.GRAY);
-		add(totalInText);
+		JLabel label6 = new JLabel("     ");
+		footJPanel.add(label6);
+		JLabel label7 = new JLabel("总-(借贷)差值:");
+		footJPanel.add(label7);
 
-		JLabel label6 = new JLabel("总计:");
-		label6.setBounds(580, 475, 30, 30);
-		add(label6);
+		totalDisparityText = new JTextArea("0");
+		totalDisparityText.setBorder(new LineBorder(new Color(127, 157, 185), 1, false));
+		totalDisparityText.setDisabledTextColor(Color.GRAY);
+		footJPanel.add(totalDisparityText);
 
-		totalText = new JTextArea("");
-		totalText.setBounds(620, 480, 100, 20);
-		totalText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		totalText.setDisabledTextColor(Color.GRAY);
-		add(totalText);
-
-		JLabel label2 = new JLabel("保存路径:");
-		label2.setBounds(10, 510, 60, 30);
-		add(label2);
-
-		saveFileText = new JTextArea("");
-		saveFileText.setBounds(80, 515, 300, 20);
-		saveFileText.setBorder(new LineBorder(new java.awt.Color(127, 157, 185), 1, false));
-		saveFileText.setDisabledTextColor(Color.GRAY);
-		add(saveFileText);
-
-		saveFileButton = new JButton("选择保存路径");
-		saveFileButton.setBounds(390, 510, 120, 30);
-		saveFileButton.addActionListener(this);
-		add(saveFileButton);
+		JLabel label8 = new JLabel("            ");
+		footJPanel.add(label8);
 
 		saveButton = new JButton("保存");
-		saveButton.setBounds(30, 550, 80, 30);
 		saveButton.addActionListener(this);
-		add(saveButton);
+		footJPanel.add(saveButton);
 
 		closeButton = new JButton("关闭");
-		closeButton.setBounds(150, 550, 80, 30);
 		closeButton.addActionListener(this);
-		add(closeButton);
+		footJPanel.add(closeButton);
+		add(footJPanel, BorderLayout.SOUTH);
 	}
 
 	/**
 	 * 事件监听
 	 */
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == chooseFileButton) {
+		if (e.getSource() == chooseFileButton) {// 选择源文件
 			JFileChooser chooser = new JFileChooser();
 			chooser.setFileSelectionMode(0);
 			int status = chooser.showOpenDialog(null);
@@ -232,60 +221,69 @@ public class Main extends JFrame implements ActionListener {
 					JOptionPane.showMessageDialog(this, "不是EXCEL文件", "错误", JOptionPane.ERROR_MESSAGE);
 				}
 			}
-		} else if (e.getSource() == columnSettingButton) {
+		} else if (e.getSource() == columnSettingButton) {// 列选项
 			if (frames.get(ColumnSetting.class.getName()) == null) {
 				frames.put(ColumnSetting.class.getName(), new ColumnSetting(this));
 			} else {
 				frames.get(ColumnSetting.class.getName()).setVisible(true);
 			}
-		} else if (e.getSource() == saveFileButton) {
-			JFileChooser chooser = new JFileChooser();
-			chooser.setFileSelectionMode(1);
-			int status = chooser.showOpenDialog(null);
-			if (status == 1) {
-				return;
+		} else if (e.getSource() == addButton) {// 添加空行
+			myTableModel.addRow(new Object[columnNames.length]);
+			totalCountText.setText(myTableModel.getRowCount() + "");
+		} else if (e.getSource() == copyButton) {// 复制添加行
+			int row = table.getSelectedRow();
+			if (row == -1) {
+				JOptionPane.showMessageDialog(Main.this, "请选择要复制的行!");
 			} else {
-				// 读取选择器选择到的文件
-				File file = chooser.getSelectedFile();
-				String dateString = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-				String fileName = file.getPath() + "\\" + FILE_NAME + "_" + dateString + ".xls";
-				saveFileText.setText(fileName);
+				Object[] objects = new Object[columnNames.length];
+				for (int i = 0; i < columnNames.length; i++) {
+					objects[i] = myTableModel.getValueAt(row, i);
+				}
+				myTableModel.addRow(objects);
+				totalCountText.setText(myTableModel.getRowCount() + "");
+			}
+		} else if (e.getSource() == removeButton) {// 移除
+			int row = table.getSelectedRow();
+			if (row == -1) {
+				JOptionPane.showMessageDialog(Main.this, "请选择要删除的行!");
+			} else {
+				myTableModel.removeRow(row);
+				totalCountText.setText(myTableModel.getRowCount() + "");
 			}
 		} else if (e.getSource() == saveButton) {
-			if (StringUtil.isEmpty(saveFileText.getText())) {
-				JOptionPane.showMessageDialog(this, "选择保存位置", "错误", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
-
 			if (myTableModel.getRowCount() == 0) {
 				JOptionPane.showMessageDialog(this, "无可保存数据", "错误", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			Money totalIn = new Money(totalInText.getText());
-			Money totalOut = new Money(totalOutText.getText());
-			Money total = new Money(totalText.getText());
-
-			if (!totalIn.equals(totalOut)) {
+			if (!inAmount.equals(outAmount)) {
 				if (JOptionPane.showConfirmDialog(this, "出入金不匹配,是否保存?", "警告", JOptionPane.YES_NO_OPTION) != 0) {
 					return;
 				}
 			}
-
-			if (!totalIn.addTo(totalOut).equals(total)) {
-				if (JOptionPane.showConfirmDialog(this, "出入金与合计不匹配,是否保存?", "警告", JOptionPane.YES_NO_OPTION) != 0) {
+			if (!inAmount.add(outAmount).equals(totalAmount)) {
+				if (JOptionPane.showConfirmDialog(this, "出入金与总金额不匹配,是否保存?", "警告", JOptionPane.YES_NO_OPTION) != 0) {
 					return;
 				}
+			}
+
+			// 读取选择器选择到的文件
+			String dateString = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			JFileChooser chooser = new JFileChooser();
+			chooser.setSelectedFile(new File(FILE_NAME + "_" + dateString + ".xls"));
+			int status = chooser.showSaveDialog(Main.this);
+			if (status == 1) {
+				return;
 			}
 
 			Object[][] object = new Object[myTableModel.getRowCount()][columnNames.length];
 
 			for (int i = 0; i < myTableModel.getRowCount(); i++) {
 				for (int j = 0; j < columnNames.length; j++) {
-					object[i][j] = myTableModel.getValueAt(i, j);
+					object[i][j] = myTableModel.getValueAt(i, myTableModel.findColumn(columnNames[j]));
 				}
 			}
-			if (CreateExcel.saveData(saveFileText.getText(), columnNames, object)) {
+			if (CreateExcel.saveData(chooser.getSelectedFile().getPath(), columnNames, object)) {
 				JOptionPane.showMessageDialog(this, "保存成功", "完成", JOptionPane.INFORMATION_MESSAGE);
 			} else {
 				JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.WARNING_MESSAGE);
@@ -308,21 +306,18 @@ public class Main extends JFrame implements ActionListener {
 			}
 			Object[][] vData = new Object[datas.size()][columnNames.length];
 
-			Money inCount = new Money(0);
-			Money outCount = new Money(0);
-			Money totalCount = new Money(0);
-
 			while (myTableModel.getRowCount() > 0) {
 				myTableModel.removeRow(myTableModel.getRowCount() - 1);
 			}
 
+			resetAmount();
 			ArrayList<Integer> warnIndex = new ArrayList<>();
-
 			for (int i = 0; i < datas.size(); i++) {
 				vData[i] = datas.get(i).getRow(columnNames.length);
-				inCount.addTo(datas.get(i).getInAmount());
-				outCount.addTo(datas.get(i).getOutAmount());
-				totalCount.addTo(datas.get(i).getTotalAmount());
+
+				inAmount.addTo(datas.get(i).getInAmount());
+				outAmount.addTo(datas.get(i).getOutAmount());
+				totalAmount.addTo(datas.get(i).getTotalAmount());
 				myTableModel.addRow(vData[i]);
 				if (datas.get(i).isWarn()) {
 					warnIndex.add(i);
@@ -331,37 +326,28 @@ public class Main extends JFrame implements ActionListener {
 			setRowBackgroundColor(table, warnIndex, Color.RED);
 
 			totalCountText.setText(String.valueOf(datas.size()));
-			totalInText.setText(inCount.toString());
-			totalOutText.setText(outCount.toString());
-			totalText.setText(totalCount.toString());
-
+			setDisparityAmount();
 			table.getModel().addTableModelListener(new TableModelListener() {
 
 				@Override
 				public void tableChanged(TableModelEvent e) {
-					if (e.getType() == TableModelEvent.UPDATE) {
-						if (e.getColumn() == 11 || e.getColumn() == 10 || e.getColumn() == 9) {
-							Money sum = new Money();
-							for (int i = 0; i < table.getRowCount(); i++) {
-								Object data = myTableModel.getValueAt(i, e.getColumn());
-								if (data.getClass() == Money.class) {
-									sum.addTo((Money) data);
-								} else if (data.getClass() == String.class) {
-									sum.addTo(new Money((String) data));
-								} else if (data.getClass() == Double.class) {
-									sum.addTo(new Money((Double) data));
+					if (e.getType() == TableModelEvent.INSERT || e.getType() == TableModelEvent.UPDATE
+							|| e.getType() == TableModelEvent.DELETE) {
+						resetAmount();
+						for (int i = 0; i < table.getRowCount(); i++) {
+							for (int j = 9; j <= 11; j++) {
+								Money money = getMoney(myTableModel.getValueAt(i, j));
+								if (j == 11) {
+									inAmount.addTo(money);
+								} else if (j == 10) {
+									outAmount.addTo(money);
+								} else if (j == 9) {
+									totalAmount.addTo(money);
 								}
 							}
 
-							if (e.getColumn() == 11) {
-								totalInText.setText(sum.toString());
-							} else if (e.getColumn() == 10) {
-								totalOutText.setText(sum.toString());
-							} else if (e.getColumn() == 9) {
-								totalText.setText(sum.toString());
-							}
-
 						}
+						setDisparityAmount();
 					}
 				}
 			});
@@ -369,6 +355,32 @@ public class Main extends JFrame implements ActionListener {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private Money getMoney(Object data) {
+		if (data == null) {
+			return new Money(0);
+		}
+		if (data.getClass() == Money.class) {
+			return (Money) data;
+		} else if (data.getClass() == String.class) {
+			return new Money((String) data);
+		} else if (data.getClass() == Double.class) {
+			return new Money((Double) data);
+		} else {
+			return new Money(0);
+		}
+	}
+
+	private void resetAmount() {
+		inAmount.setCent(0);
+		outAmount.setCent(0);
+		totalAmount.setCent(0);
+	}
+
+	private void setDisparityAmount() {
+		disparityText.setText(outAmount.subtract(inAmount).toString());
+		totalDisparityText.setText(totalAmount.subtract(outAmount).subtract(inAmount).toString());
 	}
 
 	/**

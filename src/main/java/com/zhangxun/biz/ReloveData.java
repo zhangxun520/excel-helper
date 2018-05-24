@@ -55,7 +55,7 @@ public class ReloveData {
 			TargetData[] targetDatas = new TargetData[8];
 
 			TargetData inTargetData = null;
-			if (sourceData.getInNumber() > 0) {// 收款后优先成1002.05
+			if (sourceData.getInNumber() != 0) {// 收款后优先成1002.05
 				inTargetData = buildInTarget(targetData, sourceData, mve2Map);
 				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
 					TargetData _inTargetData = build1002P05Target(inTargetData, sourceData, mve2Map);
@@ -63,7 +63,7 @@ public class ReloveData {
 				}
 				targetDatas[1] = inTargetData;
 			}
-			if (sourceData.getOutNumber() > 0) {// 付款后生成1002.05
+			if (sourceData.getOutNumber() != 0) {// 付款后生成1002.05
 				TargetData outTargetData = buildOutTarget(targetData, sourceData, mve2Map);
 				targetDatas[2] = outTargetData;
 				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
@@ -71,10 +71,10 @@ public class ReloveData {
 					targetDatas[3] = _outTargetData;
 				}
 			}
-			if (sourceData.getTransferNumber() > 0) {
+			if (sourceData.getTransferNumber() != 0) {
 				buildTransferTarget(targetData, sourceData, mve2Map, targetDatas);
 			}
-			if (sourceData.getTakeNumber() > 0 && sourceData.getOutNumber() <= 0) {
+			if (sourceData.getTakeNumber() != 0 && sourceData.getOutNumber() == 0) {
 				TargetData[] takeTargetDatas = buildTakeTarget(targetData, sourceData, mve2Map);
 				targetDatas[6] = takeTargetDatas[0];
 				targetDatas[7] = takeTargetDatas[1];
@@ -152,8 +152,14 @@ public class ReloveData {
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 		targetData.setOutAmount(new Money());
-		targetData.setInAmount(new Money(sourceData.getInNumber()));
-		targetData.setTotalAmount(new Money(sourceData.getInNumber()));
+		if (sourceData.getInNumber() < 0) {
+			targetData.setInAmount(new Money());
+			targetData.setTotalAmount(new Money());
+			targetData.setWarn(true);
+		} else {
+			targetData.setInAmount(new Money(sourceData.getInNumber()));
+			targetData.setTotalAmount(new Money(sourceData.getInNumber()));
+		}
 		targetData
 				.setDocumentMemo("收" + sourceData.getProjectName() + subjectName + "," + sourceData.getCustomerName());
 
@@ -185,10 +191,15 @@ public class ReloveData {
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 
-		targetData.setOutAmount(new Money(sourceData.getOutNumber()));
 		targetData.setInAmount(new Money());
-		targetData.setTotalAmount(new Money(sourceData.getOutNumber()));
-
+		if (sourceData.getOutNumber() > 0) {
+			targetData.setOutAmount(new Money(sourceData.getOutNumber()));
+			targetData.setTotalAmount(new Money(sourceData.getOutNumber()));
+		} else {
+			targetData.setOutAmount(new Money());
+			targetData.setTotalAmount(new Money());
+			targetData.setWarn(true);
+		}
 		targetData.setDocumentMemo(
 				"付" + sourceData.getProjectName() + subjectName + "," + sourceData.getCapitalProperties());
 
@@ -213,7 +224,12 @@ public class ReloveData {
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 
-		targetData.setOutAmount(new Money(sourceData.getTransferNumber()));
+		if (sourceData.getTransferNumber() < 0) {
+			targetData.setOutAmount(new Money(0));
+			targetData.setWarn(true);
+		} else {
+			targetData.setOutAmount(new Money(sourceData.getTransferNumber()));
+		}
 		targetData.setInAmount(new Money());
 		targetData.setTotalAmount(targetData.getOutAmount());
 
@@ -241,7 +257,8 @@ public class ReloveData {
 			targetData2.setSubjectCode(subjectCode);
 			targetData2.setSubjectName(subjectName);
 			targetData2.setOutAmount(new Money());
-			targetData2.setInAmount(new Money(sourceData.getTransferNumber()));
+			targetData2.setInAmount(new Money(targetData.getOutAmount().getCent() / 100,
+					(int) (targetData.getOutAmount().getCent() % 100)));
 			targetData2.setApproveProject(
 					getApproveProject(targetData2.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 			targetDatas[5] = targetData2;
@@ -264,7 +281,12 @@ public class ReloveData {
 		targetData.setSubjectCode(subjectCode);
 		targetData.setSubjectName(subjectName);
 
-		targetData.setOutAmount(new Money(sourceData.getTakeNumber()));
+		if (sourceData.getTakeNumber() < 0) {
+			targetData.setOutAmount(new Money(0));
+			targetData.setWarn(true);
+		} else {
+			targetData.setOutAmount(new Money(sourceData.getTakeNumber()));
+		}
 		targetData.setInAmount(new Money());
 		targetData.setTotalAmount(targetData.getOutAmount());
 
@@ -284,7 +306,8 @@ public class ReloveData {
 		targetData2.setApproveProject(
 				getApproveProject(targetData2.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 		targetData2.setOutAmount(new Money());
-		targetData2.setInAmount(new Money(sourceData.getTakeNumber()));
+		targetData2.setInAmount(new Money(targetData.getOutAmount().getCent() / 100,
+				(int) (targetData.getOutAmount().getCent() % 100)));
 		targetDatas[1] = targetData2;
 
 		return targetDatas;
@@ -314,15 +337,13 @@ public class ReloveData {
 			_targetData.setSubjectName(StringUtil.defaultValue(
 					getPropertiesValueBykey(subjectProperties, Constants.LFT_SUBJECT_CODE, false), "联付通数据"));
 		}
-		_targetData.setWarn(false);
+		_targetData.setWarn(targetData.isWarn());
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
 
 		_targetData.setInAmount(targetData.getOutAmount());
 		_targetData.setOutAmount(targetData.getInAmount());
-		_targetData.setTotalAmount(
-				new Money(targetData.getOutAmount().getCent() / 100, (int) (targetData.getOutAmount().getCent() % 100))
-						.addTo(targetData.getInAmount()));
+		_targetData.setTotalAmount(targetData.getOutAmount().add(targetData.getInAmount()));
 		return _targetData;
 	}
 
