@@ -369,6 +369,14 @@ public class ReloveData {
 		return (String) TemplateRuntime.execute(compiledTemplate, mve2Map);
 	}
 
+	/**
+	 * 
+	 * @param properties
+	 * @param value
+	 * @param ignoreBlank
+	 *            true(核算项目)，false(科目名称)
+	 * @return
+	 */
 	private static MyMap getPropertiesKeyByContainsValue(Properties properties, String value, boolean ignoreBlank) {
 		for (Object key : properties.keySet()) {
 			String _value = (String) properties.get(key);
@@ -387,12 +395,14 @@ public class ReloveData {
 					}
 				}
 			} else {
-				String[] ss = _value.split("\\s+");
+				String[] strs = _value.split("%");// 根据%分组(别名)
+				String aliasName = strs.length > 1 ? strs[1] : null;
+				String[] ss = strs[0].split("\\s+");// 根据空格分组
 				for (String s : ss) {
 					String[] _ss = s.split("-");
 					if (_ss.length == 1) {
 						if (value.equals(_ss[0])) {
-							return new MyMap((String) key, _ss[0]);
+							return new MyMap((String) key, aliasName == null ? _ss[0] : aliasName);
 						}
 					} else if (_ss.length == 2) {
 						if (value.contains(_ss[0])) {
@@ -403,7 +413,7 @@ public class ReloveData {
 									f = false;
 							}
 							if (f) {
-								return new MyMap((String) key, _ss[0]);
+								return new MyMap((String) key, aliasName == null ? _ss[0] : aliasName);
 							}
 						}
 					}
