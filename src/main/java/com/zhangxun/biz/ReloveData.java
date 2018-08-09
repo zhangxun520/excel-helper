@@ -331,7 +331,7 @@ public class ReloveData {
 		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis() && targetData.getInAmount().getCent() > 0) {
 			_targetData.setSubjectCode(Constants.T1_REPLACE_SUBJECT_CODE);
 			_targetData.setSubjectName(StringUtil.defaultValue(
-					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "暂收款"));
+					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "国有商户待确认"));
 		} else {
 			_targetData.setSubjectCode(Constants.LFT_SUBJECT_CODE);
 			_targetData.setSubjectName(StringUtil.defaultValue(
@@ -438,6 +438,9 @@ public class ReloveData {
 				return strings[0];
 			}
 		} else {
+			String[] strs = _value.split("%");// 根据%分组(别名)
+			if (strs.length > 1)
+				return strs[1];
 			String[] ss = _value.split("\\s+");
 			for (String s : ss) {
 				String[] _ss = s.split("-");

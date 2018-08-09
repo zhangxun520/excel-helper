@@ -39,7 +39,7 @@ public class Constants {
 	/**
 	 * 跨日期替换为固定科目
 	 */
-	public static final String T1_REPLACE_SUBJECT_CODE = "2202.06";
+	public static final String T1_REPLACE_SUBJECT_CODE = "2202.13";
 
 	/**
 	 * 转-借方默认科目代码
