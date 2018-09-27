@@ -107,11 +107,7 @@ public class ReadData {
 				return row.getCell(i).getDateCellValue();
 			}
 		} else if (row.getCell(i).getCellTypeEnum() == CellType.STRING) {
-			try {
-				return DateUtil.format.parse(row.getCell(i).getStringCellValue());
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
+			return DateUtil.getDateByStr(row.getCell(i).getStringCellValue().trim());
 		}
 		return null;
 	}
