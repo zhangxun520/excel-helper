@@ -34,7 +34,6 @@ public class DateUtil {
 
 		i = getValueIndex(v, i + 1);
 		int day = Integer.parseInt(v[i]);
-		System.out.println(year + " " + month + " " + day);
 		calendar.set(year, month, day, 0, 0, 0);
 		calendar.set(Calendar.MILLISECOND, 0);
 		return calendar.getTime();

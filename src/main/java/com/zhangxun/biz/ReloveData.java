@@ -57,7 +57,7 @@ public class ReloveData {
 			TargetData inTargetData = null;
 			if (sourceData.getInNumber() != 0) {// 收款后优先成1002.05
 				inTargetData = buildInTarget(targetData, sourceData, mve2Map);
-				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
+				if (inTargetData != null && !Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
 					TargetData _inTargetData = build1002P05Target(inTargetData, sourceData, mve2Map);
 					targetDatas[0] = _inTargetData;
 				}
@@ -66,7 +66,7 @@ public class ReloveData {
 			if (sourceData.getOutNumber() != 0) {// 付款后生成1002.05
 				TargetData outTargetData = buildOutTarget(targetData, sourceData, mve2Map);
 				targetDatas[2] = outTargetData;
-				if (!Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
+				if (outTargetData != null && !Constants.LFT_SUBJECT_CODE.equals(targetData.getSubjectCode())) {
 					TargetData _outTargetData = build1002P05Target(outTargetData, sourceData, mve2Map);
 					targetDatas[3] = _outTargetData;
 				}
@@ -143,6 +143,10 @@ public class ReloveData {
 
 		MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
 		if (myData.getKey() != null) {
+			// 尾号为h的科目不显示
+			if (myData.getKey().endsWith("h")) {
+				return null;
+			}
 			subjectCode = myData.getKey();
 			subjectName = myData.getValue();
 		} else {
@@ -182,6 +186,10 @@ public class ReloveData {
 		String subjectCode = null;
 		MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
 		if (myData.getKey() != null) {
+			// 尾号为h的科目不显示
+			if (myData.getKey().endsWith("h")) {
+				return null;
+			}
 			subjectCode = myData.getKey();
 			subjectName = myData.getValue();
 		} else {
@@ -298,7 +306,7 @@ public class ReloveData {
 
 		// 贷方
 		TargetData targetData2 = (TargetData) targetData.clone();
-		subjectCode = Constants.TAKE_IN_SUBJECT_CODE;
+		subjectCode = Constants.TAKE_IN_SUBJECT_CODE_NEW;
 		subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
 				sourceData.getSettleSubject());
 		targetData2.setSubjectCode(subjectCode);
@@ -313,6 +321,14 @@ public class ReloveData {
 		return targetDatas;
 	}
 
+	/**
+	 * 1102.05全部转成新的1002.06
+	 * 
+	 * @param targetData
+	 * @param sourceData
+	 * @param mve2Map
+	 * @return
+	 */
 	private static TargetData build1002P05Target(TargetData targetData, SourceData sourceData,
 			Map<String, Object> mve2Map) {
 		TargetData _targetData = (TargetData) targetData.clone();
@@ -322,21 +338,10 @@ public class ReloveData {
 		inDate.setTime(sourceData.getInDate());
 		settleDate.setTime(sourceData.getSettleDate());
 
-		String t1mark = PropertiesUtil.configProperties.getProperty(Constants.T1_MARK, Constants.T1Mark.MONTH);
-		if (Constants.T1Mark.MONTH.equals(t1mark)) {
-			settleDate.set(Calendar.DATE, 1);
-			inDate.set(Calendar.DATE, 1);
-		}
-		// 执行跨日期科目替换,
-		if (settleDate.getTimeInMillis() != inDate.getTimeInMillis() && targetData.getInAmount().getCent() > 0) {
-			_targetData.setSubjectCode(Constants.T1_REPLACE_SUBJECT_CODE);
-			_targetData.setSubjectName(StringUtil.defaultValue(
-					getPropertiesValueBykey(subjectProperties, Constants.T1_REPLACE_SUBJECT_CODE, false), "国有商户待确认"));
-		} else {
-			_targetData.setSubjectCode(Constants.LFT_SUBJECT_CODE);
-			_targetData.setSubjectName(StringUtil.defaultValue(
-					getPropertiesValueBykey(subjectProperties, Constants.LFT_SUBJECT_CODE, false), "联付通数据"));
-		}
+		_targetData.setSubjectCode(Constants.NEW_LFT_SUBJECT_CODE);
+		_targetData.setSubjectName(StringUtil.defaultValue(
+				getPropertiesValueBykey(subjectProperties, Constants.NEW_LFT_SUBJECT_CODE, false), "联付通数据"));
+
 		_targetData.setWarn(targetData.isWarn());
 		_targetData.setApproveProject(
 				getApproveProject(_targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
