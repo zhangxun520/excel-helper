@@ -388,15 +388,17 @@ public class ReloveData {
 			if (StringUtil.isEmpty(_value)) {
 				continue;
 			}
-			if (ignoreBlank) {
+			if (ignoreBlank) {// 核算项目
 				String[] strings = _value.split("\\|");
 				if (strings.length == 1) {
 					if (_value.contains(value)) {
 						return new MyMap((String) key, _value);
 					}
 				} else if (strings.length >= 2) {
-					if (value.contains(strings[1])) {
-						return new MyMap((String) key, strings[0]);
+					for (int i = 1; i < strings.length; i++) {
+						if (value.contains(strings[i])) {
+							return new MyMap((String) key, strings[0]);
+						}
 					}
 				}
 			} else {
