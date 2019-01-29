@@ -282,6 +282,16 @@ public class ReloveData {
 			Map<String, Object> mve2Map) {
 		TargetData[] targetDatas = new TargetData[2];
 		TargetData targetData = (TargetData) _targetData.clone();
+		if (sourceData.getInNumber() == 0 && sourceData.getTransferNumber() == 0 && sourceData.getOutNumber() == 0) {
+			String customerName = sourceData.getCapitalProperties();
+			sourceData.setCapitalProperties(sourceData.getCustomerName());
+			sourceData.setCustomerName(customerName);
+			mve2Map.put("customerName", sourceData.getCustomerName());
+			mve2Map.put("capitalProperties", sourceData.getCapitalProperties());
+			targetData.setDocumentMemo("收" + sourceData.getProjectName() + "项目价款内扣转让方服务费," + sourceData.getCapitalProperties());
+		}else{
+			targetData.setDocumentMemo("收" + sourceData.getProjectName() + "价款扣服务费," + sourceData.getCapitalProperties());
+		}
 		// 借方
 		String subjectCode = Constants.TAKE_OUT_SUBJECT_CODE;
 		String subjectName = StringUtil.defaultValue(getPropertiesValueBykey(subjectProperties, subjectCode, false),
@@ -297,8 +307,6 @@ public class ReloveData {
 		}
 		targetData.setInAmount(new Money());
 		targetData.setTotalAmount(targetData.getOutAmount());
-
-		targetData.setDocumentMemo("收" + sourceData.getProjectName() + "价款扣服务费," + sourceData.getCapitalProperties());
 
 		targetData.setApproveProject(
 				getApproveProject(targetData.getSubjectCode(), mve2Map, sourceData.getInstitutionName()));
