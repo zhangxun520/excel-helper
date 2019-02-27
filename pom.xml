@@ -69,14 +69,14 @@
 						<configuration>
 							<headerType>gui</headerType>
 							<jar>${project.build.directory}/${artifactId}-${version}-shaded.jar</jar>
-							<outfile>${project.build.directory}/excelutil.exe</outfile>
+							<outfile>${project.build.directory}/excelutil-new.exe</outfile>
 							<classPath>
 								<mainClass>com.zhangxun.Main</mainClass>
 								<preCp>anything</preCp>
 							</classPath>
 							<jre>
 								<path>jre</path>
-								<bundledJre64Bit>true</bundledJre64Bit>
+								<bundledJre64Bit>false</bundledJre64Bit>
 								<bundledJreAsFallback>false</bundledJreAsFallback>
 								<minVersion></minVersion>
 								<jdkPreference>preferJre</jdkPreference>
@@ -92,7 +92,7 @@
 								<productName>${project.name}</productName>
 								<companyName>lianft.com</companyName>
 								<internalName>hasCode</internalName>
-								<originalFilename>excelutil.exe</originalFilename>
+								<originalFilename>excelutil-new.exe</originalFilename>
 							</versionInfo>
 						</configuration>
 					</execution>

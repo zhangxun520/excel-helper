@@ -66,7 +66,12 @@ public class ReadData {
 			sourceData.setTakeNumber(StringUtil.parseDouble(getRowData(row, 9)));
 			sourceData.setInDate(getRowDateData(row, 10));
 			Date settleDate = getRowDateData(row, 11);
-			sourceData.setSettleDate(settleDate == null ? sourceData.getInDate() : settleDate);
+			if(settleDate == null){
+				sourceData.setSettleDate(sourceData.getInDate());
+				sourceData.setDefaultSettleDate(true);
+			}else{
+				sourceData.setSettleDate(settleDate);
+			}
 			if (sourceData.getInNumber() != 0.0 || sourceData.getOutNumber() != 0.0
 					|| sourceData.getTransferNumber() != 0.0 || sourceData.getTakeNumber() != 0.0) {
 				datas.add(sourceData);

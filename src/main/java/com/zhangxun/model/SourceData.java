@@ -91,6 +91,11 @@ public class SourceData {
 	@ExcelSort(sort = 11)
 	private Date settleDate;
 
+	/**
+	 * 是否默认结算日期
+	 */
+	private boolean defaultSettleDate = false;
+
 	public String getSortNo() {
 		return sortNo;
 	}
@@ -201,6 +206,14 @@ public class SourceData {
 
 	public void setSettleDate(Date settleDate) {
 		this.settleDate = settleDate;
+	}
+
+	public boolean isDefaultSettleDate() {
+		return defaultSettleDate;
+	}
+
+	public void setDefaultSettleDate(boolean defaultSettleDate) {
+		this.defaultSettleDate = defaultSettleDate;
 	}
 
 }

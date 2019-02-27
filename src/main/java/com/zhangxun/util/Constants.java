@@ -37,6 +37,11 @@ public class Constants {
 	public static final String LFT_SUBJECT_CODE = "1002.05";
 
 	/**
+	 * 额外默认生成数据列的科目代码(新)
+	 */
+	public static final String NEW_LFT_SUBJECT_CODE = "1002.08";
+
+	/**
 	 * 跨日期替换为固定科目
 	 */
 	public static final String T1_REPLACE_SUBJECT_CODE = "2202.13";
@@ -44,7 +49,7 @@ public class Constants {
 	/**
 	 * 转-借方默认科目代码
 	 */
-	public static final String TRANSFER_OUT_SUBJECT_CODE = "2202.00";
+	public static final String TRANSFER_OUT_SUBJECT_CODE = "2241.98";
 
 	/**
 	 * 转-贷方默认科目代码
@@ -60,6 +65,11 @@ public class Constants {
 	 * 扣-默认贷方科目代码
 	 */
 	public static final String TAKE_IN_SUBJECT_CODE = "2202.03";
+
+	/**
+	 * 扣-默认贷方科目代码(新)
+	 */
+	public static final String TAKE_IN_SUBJECT_CODE_NEW = "2241.98";
 
 	public class T1Mark {
 		public static final String MONTH = "M";
