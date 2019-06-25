@@ -144,10 +144,10 @@ public class ReloveData {
 		MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
 		if (myData.getKey() != null) {
 			// 尾号为h的科目不显示
-			if (myData.getKey().endsWith("h")) {
+			if (myData.getKey().endsWith("h")&&!containsRemark(sourceData.getProjectName(), PropertiesUtil.configProperties.getProperty(Constants.TargetData.REMARK))) {
 				return null;
 			}
-			subjectCode = myData.getKey();
+			subjectCode = myData.getKey().replaceAll("h", "");
 			subjectName = myData.getValue();
 		} else {
 			targetData.setWarn(true);
@@ -187,10 +187,10 @@ public class ReloveData {
 		MyMap myData = getPropertiesKeyByContainsValue(subjectProperties, sourceData.getSettleSubject(), false);
 		if (myData.getKey() != null) {
 			// 尾号为h的科目不显示
-			if (myData.getKey().endsWith("h")) {
+			if (myData.getKey().endsWith("h")&&!containsRemark(sourceData.getProjectName(), PropertiesUtil.configProperties.getProperty(Constants.TargetData.REMARK))) {
 				return null;
 			}
-			subjectCode = myData.getKey();
+			subjectCode = myData.getKey().replaceAll("h", "");
 			subjectName = myData.getValue();
 		} else {
 			targetData.setWarn(true);
@@ -382,6 +382,19 @@ public class ReloveData {
 		return (String) TemplateRuntime.execute(compiledTemplate, mve2Map);
 	}
 
+	private static boolean containsRemark(String key,String remark){
+		if(StringUtil.isEmpty(remark)){
+			return false;
+		}
+		for(String ss:remark.split("\\s+")){
+			if(key.contains(ss)){
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * 
 	 * @param properties
