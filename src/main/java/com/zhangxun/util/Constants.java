@@ -87,6 +87,8 @@ public class Constants {
 		public static final String DOCUMENT_STRING = "documentString";
 
 		public static final String EXCHANGE_TYPE = "exchangeType";
+
+		public static final String REMARK = "remark";
 	}
 
 }
