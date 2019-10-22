@@ -101,8 +101,10 @@ public class ReloveData {
 	private static TargetData buildBaseTarget(SourceData sourceData, Calendar calendar) {
 		TargetData targetData = new TargetData();
 		targetData.setDocumentDate(calendar.getTime());
-		targetData.setAccountYear(calendar.get(Calendar.YEAR));
-		targetData.setAccountMonth(calendar.get(Calendar.MONTH) + 1);
+		Calendar settleDate = Calendar.getInstance();
+		settleDate.setTime(sourceData.getSettleDate());
+		targetData.setAccountYear(settleDate.get(Calendar.YEAR));
+		targetData.setAccountMonth(settleDate.get(Calendar.MONTH) + 1);
 		targetData.setDocumentString(
 				PropertiesUtil.configProperties.getProperty(Constants.TargetData.DOCUMENT_STRING, "记"));
 		targetData.setDocumentCode(1);
