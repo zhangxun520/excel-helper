@@ -94,7 +94,7 @@ public class SourceData {
 	/**
 	 * 是否默认结算日期
 	 */
-	private boolean defaultSettleDate = false;
+	private boolean defaultSettleDate = true;
 
 	public String getSortNo() {
 		return sortNo;

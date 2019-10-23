@@ -3,9 +3,9 @@ package com.zhangxun.biz;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -66,11 +66,21 @@ public class ReadData {
 			sourceData.setTakeNumber(StringUtil.parseDouble(getRowData(row, 9)));
 			sourceData.setInDate(getRowDateData(row, 10));
 			Date settleDate = getRowDateData(row, 11);
-			if(settleDate == null){
+			if (settleDate == null) {
 				sourceData.setSettleDate(sourceData.getInDate());
-				sourceData.setDefaultSettleDate(true);
-			}else{
+			} else {
 				sourceData.setSettleDate(settleDate);
+
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(sourceData.getInDate());
+				Calendar calendar2 = Calendar.getInstance();
+				calendar2.setTime(settleDate);
+
+				if (calendar.get(Calendar.DATE) != calendar2.get(Calendar.DATE)
+						|| calendar.get(Calendar.MONTH) != calendar2.get(Calendar.MONTH)
+						|| calendar.get(Calendar.YEAR) != calendar2.get(Calendar.YEAR)) {
+					sourceData.setDefaultSettleDate(false);
+				}
 			}
 			if (sourceData.getInNumber() != 0.0 || sourceData.getOutNumber() != 0.0
 					|| sourceData.getTransferNumber() != 0.0 || sourceData.getTakeNumber() != 0.0) {
